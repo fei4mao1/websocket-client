@@ -13,6 +13,8 @@ namespace Websocket.Client.Tests.TestServer
     // This is from https://github.com/aspnet/AspNetCore.Docs/blob/master/aspnetcore/fundamentals/websockets/samples/2.x/WebSocketsSample/Startup.cs
     public class SimpleStartup
     {
+        internal static string InvalidTestHost = "google.com";
+
         public void ConfigureServices(IServiceCollection services)
         {
 
@@ -25,7 +27,8 @@ namespace Websocket.Client.Tests.TestServer
             {
                 if (context.Request.Path == "/ws")
                 {
-                    if (context.WebSockets.IsWebSocketRequest)
+                    if (context.WebSockets.IsWebSocketRequest
+                        && context.Request.Host.Host != InvalidTestHost)
                     {
                         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
                         await SendResponse(webSocket,
@@ -46,7 +49,7 @@ namespace Websocket.Client.Tests.TestServer
 
         protected virtual async Task HandleRequest(WebSocket webSocket, HttpContext context)
         {
-            while(true)
+            while (true)
             {
                 var request = await ReadRequest(webSocket);
                 var result = request.result;
@@ -98,7 +101,7 @@ namespace Websocket.Client.Tests.TestServer
                 do
                 {
                     result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-                    if(result.CloseStatus.HasValue)
+                    if (result.CloseStatus.HasValue)
                         return (result, null);
 
                     if (buffer.Array != null)
@@ -125,12 +128,12 @@ namespace Websocket.Client.Tests.TestServer
 
         protected virtual async Task SendResponse(WebSocket webSocket, ResponseMessage message)
         {
-            if(message.MessageType == WebSocketMessageType.Binary)
+            if (message.MessageType == WebSocketMessageType.Binary)
             {
                 await webSocket.SendAsync(
-                    new ArraySegment<byte>(message.Binary, 0, message.Binary.Length), 
-                    message.MessageType, 
-                    true, 
+                    new ArraySegment<byte>(message.Binary, 0, message.Binary.Length),
+                    message.MessageType,
+                    true,
                     CancellationToken.None);
                 return;
             }
@@ -155,7 +158,7 @@ namespace Websocket.Client.Tests.TestServer
 
         private async Task SendEcho(WebSocket webSocket, string msg, bool slowdown)
         {
-            if(slowdown)
+            if (slowdown)
                 await Task.Delay(100);
             await SendResponse(webSocket, ResponseMessage.TextMessage(msg));
         }

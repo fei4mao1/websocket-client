@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -46,10 +47,12 @@ namespace Websocket.Client.Sample
                 //client.Options.SetRequestHeader("Origin", "xxx");
                 return client;
             });
+            var loggerFactory = LoggerFactory.Create(builder => { builder.AddSerilog(Log.Logger); });
 
             var url = new Uri("wss://www.bitmex.com/realtime");
 
-            using (IWebsocketClient client = new WebsocketClient(url, factory))
+            using (IWebsocketClient client = new WebsocketClient(url, factory,
+                loggerFactory.CreateLogger<WebsocketClient>()))
             {
                 client.Name = "Bitmex";
                 client.ReconnectTimeout = TimeSpan.FromSeconds(30);
@@ -88,7 +91,7 @@ namespace Websocket.Client.Sample
             {
                 await Task.Delay(1000);
 
-                if(!client.IsRunning)
+                if (!client.IsRunning)
                     continue;
 
                 client.Send("ping");
@@ -100,7 +103,7 @@ namespace Websocket.Client.Sample
             while (true)
             {
                 await Task.Delay(20000);
-                
+
                 var production = new Uri("wss://www.bitmex.com/realtime");
                 var testnet = new Uri("wss://testnet.bitmex.com/realtime");
 
@@ -117,7 +120,7 @@ namespace Websocket.Client.Sample
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
                 .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
-                .WriteTo.Console(LogEventLevel.Verbose, 
+                .WriteTo.Console(LogEventLevel.Verbose,
                     theme: AnsiConsoleTheme.Literate,
                     outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] {Message} {NewLine}{Exception}")
                 .CreateLogger();
