@@ -76,7 +76,9 @@ namespace Websocket.Client
                 //    Options = { KeepAliveInterval = new TimeSpan(0, 0, 5, 0) }
                 //};
                 var client = new ClientWebSocket();
-                await client.ConnectAsync(uri, token).ConfigureAwait(false);
+                //Temporarily modify the connection timeout time to 10 seconds, otherwise an error condition of infinite waiting may occur
+                var _cancellationTimeOut = new CancellationTokenSource(1000 * 10);
+                await client.ConnectAsync(uri, _cancellationTimeOut.Token).ConfigureAwait(false);
                 return client;
             }); 
         }
@@ -272,7 +274,9 @@ namespace Websocket.Client
 
             return (async (uri, token) => {
                 var client = clientFactory();
-                await client.ConnectAsync(uri, token).ConfigureAwait(false);
+                //Temporarily modify the connection timeout time to 10 seconds, otherwise an error condition of infinite waiting may occur
+                var _cancellationTimeOut = new CancellationTokenSource(1000 * 10);
+                await client.ConnectAsync(uri, _cancellationTimeOut.Token).ConfigureAwait(false);
                 return client;
             });
         }
